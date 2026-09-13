@@ -108,13 +108,14 @@ function LoadBar({ items, typeMeta }: { items: Item[], typeMeta: Record<string, 
   );
 }
 
-function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes, typeMeta, myNoteIds }: {
+function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes, typeMeta, myNoteIds, isPresident }: {
   item: Item; notes: Note[]; onClose: () => void;
   onAddNote: (author: string, text: string) => Promise<void>;
   onDeleteNote: (id: number) => Promise<void>;
   loadingNotes: boolean;
   typeMeta: Record<string, {label:string;color:string;bg:string;dot:string}>;
   myNoteIds: Set<number>;
+  isPresident: boolean;
 }) {
   const [text, setText] = useState("");
   const [author, setAuthor] = useState("");
@@ -153,10 +154,10 @@ function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes
                   <span style={{ color:"#4B5563" }}>{n.text}</span>
                   <div style={{ fontSize:10, color:"#9CA3AF", marginTop:2 }}>{new Date(n.created_at).toLocaleString()}</div>
                 </div>
-                {myNoteIds.has(n.id) && (
+                {(myNoteIds.has(n.id) || isPresident) && (
                   <button onClick={() => handleDelete(n.id)} disabled={deletingId === n.id}
                     style={{ background:"none", border:"none", color: deletingId===n.id ? "#D1D5DB" : "#EF4444", cursor: deletingId===n.id ? "not-allowed" : "pointer", fontSize:16, padding:"0 2px", flexShrink:0, lineHeight:1 }}
-                    title="Delete your note">
+                    title={isPresident ? "Delete note" : "Delete your note"}>
                     {deletingId === n.id ? "..." : "×"}
                   </button>
                 )}
@@ -537,7 +538,7 @@ export default function App() {
 
       {modal?.type==="note" && modal.item && (
         <NoteModal item={modal.item} notes={notesForItem(modal.item.id)} loadingNotes={loadingNotes}
-          typeMeta={typeMeta} myNoteIds={myNoteIds} onClose={() => setModal(null)}
+          typeMeta={typeMeta} myNoteIds={myNoteIds} isPresident={role===ROLES.PRESIDENT} onClose={() => setModal(null)}
           onAddNote={(author, text) => addNote(modal.item!.id, author, text)}
           onDeleteNote={deleteNote} />
       )}
