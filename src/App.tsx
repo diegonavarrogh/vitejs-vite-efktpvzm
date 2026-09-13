@@ -34,7 +34,7 @@ const WEEKS = [
   { label: "Dec 7",  date: "Dec 7"  },
 ];
 
-const TYPE_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+const DEFAULT_TYPES: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   event:     { label: "Event",       color: "#6C63FF", bg: "#EEF0FF", dot: "#6C63FF" },
   cabinet:   { label: "Cabinet Mtg", color: "#F59E0B", bg: "#FFF8E6", dot: "#F59E0B" },
   deadline:  { label: "Deadline",    color: "#EF4444", bg: "#FFF0F0", dot: "#EF4444" },
@@ -43,6 +43,11 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string; dot:
   outreach:  { label: "Outreach",    color: "#8B5CF6", bg: "#F3EEFF", dot: "#8B5CF6" },
   fundraiser:{ label: "Fundraiser",  color: "#EC4899", bg: "#FFF0F8", dot: "#EC4899" },
 };
+
+const TYPE_COLORS = [
+  "#6C63FF","#F59E0B","#EF4444","#0EA5E9","#10B981","#8B5CF6","#EC4899",
+  "#F97316","#14B8A6","#6366F1","#84CC16","#D946EF","#0284C7","#DC2626",
+];
 
 const SEED_ITEMS = [
   { week: "Sep 8",  type: "cabinet",    title: "Fall Kickoff Cabinet Meeting — Trainings, Semester Plan, Website Review", load: 1 },
@@ -84,14 +89,11 @@ const inputStyle: React.CSSProperties = {
   background: "#FFFFFF", color: "#111827",
 };
 
-const textareaStyle: React.CSSProperties = {
-  ...inputStyle, resize: "none" as const,
-};
-
 interface Note { id: number; item_id: number; author: string; text: string; created_at: string }
 interface Item { id: number; week: string; type: string; title: string; load: number }
+interface CustomType { key: string; label: string; color: string; bg: string; dot: string }
 
-function LoadBar({ items }: { items: Item[] }) {
+function LoadBar({ items, typeMeta }: { items: Item[], typeMeta: Record<string, {label:string;color:string;bg:string;dot:string}> }) {
   const total = items.reduce((s, i) => s + i.load, 0);
   const pct = Math.min((total / 8) * 100, 100);
   const color = total <= 2 ? "#10B981" : total <= 5 ? "#F59E0B" : "#EF4444";
@@ -106,15 +108,16 @@ function LoadBar({ items }: { items: Item[] }) {
   );
 }
 
-function NoteModal({ item, notes, onClose, onAddNote, loadingNotes }: {
+function NoteModal({ item, notes, onClose, onAddNote, loadingNotes, typeMeta }: {
   item: Item; notes: Note[]; onClose: () => void;
   onAddNote: (author: string, text: string) => Promise<void>;
   loadingNotes: boolean;
+  typeMeta: Record<string, {label:string;color:string;bg:string;dot:string}>;
 }) {
   const [text, setText] = useState("");
   const [author, setAuthor] = useState("");
   const [posting, setPosting] = useState(false);
-  const meta = TYPE_META[item.type];
+  const meta = typeMeta[item.type] || { label: item.type, color: "#6B7280", bg: "#F3F4F6", dot: "#6B7280" };
   const handlePost = async () => {
     if (!text.trim() || !author.trim()) return;
     setPosting(true);
@@ -146,7 +149,7 @@ function NoteModal({ item, notes, onClose, onAddNote, loadingNotes }: {
         <div style={{ borderTop:"1px solid #F3F4F6", paddingTop:16 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:8, textTransform:"uppercase" }}>Add a Note</div>
           <input placeholder="Your name" value={author} onChange={e => setAuthor(e.target.value)} style={{ ...inputStyle, marginBottom:8 }} />
-          <textarea placeholder="Leave a thought, question, or update..." value={text} onChange={e => setText(e.target.value)} rows={3} style={textareaStyle} />
+          <textarea placeholder="Leave a thought, question, or update..." value={text} onChange={e => setText(e.target.value)} rows={3} style={{ ...inputStyle, resize:"none" as const }} />
           <button onClick={handlePost} disabled={posting}
             style={{ marginTop:8, background: posting ? "#9CA3AF" : "#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"9px 18px", fontWeight:700, fontSize:13, cursor: posting ? "not-allowed" : "pointer", float:"right" }}>
             {posting ? "Posting..." : "Post Note"}
@@ -157,29 +160,92 @@ function NoteModal({ item, notes, onClose, onAddNote, loadingNotes }: {
   );
 }
 
-function EditItemModal({ item, onClose, onSave }: { item: Item; onClose: () => void; onSave: (u: Item) => Promise<void> }) {
-  const [form, setForm] = useState({ ...item });
+function ItemFormModal({ item, onClose, onSave, title, typeMeta, isPresident }: {
+  item?: Item; onClose: () => void;
+  onSave: (f: Omit<Item,"id"> | Item) => Promise<void>;
+  title: string;
+  typeMeta: Record<string, {label:string;color:string;bg:string;dot:string}>;
+  isPresident: boolean;
+}) {
+  const [form, setForm] = useState<Omit<Item,"id"> | Item>(
+    item || { week: WEEKS[0].date, type: Object.keys(typeMeta)[0], title: "", load: 2 }
+  );
   const [saving, setSaving] = useState(false);
+  const [showNewType, setShowNewType] = useState(false);
+  const [newTypeLabel, setNewTypeLabel] = useState("");
+  const [newTypeColor, setNewTypeColor] = useState(TYPE_COLORS[0]);
+  const [onAddType, setOnAddType] = useState<((key: string, label: string, color: string) => void) | null>(null);
+
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.55)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
-      <div style={{ background:"#fff", borderRadius:16, padding:28, width:440, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize:17, fontWeight:800, color:"#111827", marginBottom:18 }}>Edit Item</div>
-        {([
-          { label:"Week",   el: <select value={form.week} onChange={e=>setForm({...form,week:e.target.value})} style={inputStyle}>{WEEKS.map(w=><option key={w.date} value={w.date}>{w.date}</option>)}</select> },
-          { label:"Type",   el: <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} style={inputStyle}>{Object.entries(TYPE_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select> },
-          { label:"Title",  el: <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} style={inputStyle} /> },
-          { label:"Effort", el: <select value={form.load} onChange={e=>setForm({...form,load:Number(e.target.value)})} style={inputStyle}><option value={1}>Low</option><option value={2}>Medium</option><option value={3}>High</option></select> },
-        ] as {label:string;el:React.ReactNode}[]).map(({label,el})=>(
-          <div key={label} style={{ marginBottom:12 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:5, textTransform:"uppercase" }}>{label}</div>
-            {el}
+      <div style={{ background:"#fff", borderRadius:16, padding:28, width:460, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)", maxHeight:"90vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize:17, fontWeight:800, color:"#111827", marginBottom:18 }}>{title}</div>
+
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:5, textTransform:"uppercase" }}>Week</div>
+          <select value={(form as any).week} onChange={e=>setForm({...form,week:e.target.value})} style={inputStyle}>
+            {WEEKS.map(w=><option key={w.date} value={w.date}>{w.date}</option>)}
+          </select>
+        </div>
+
+        <div style={{ marginBottom:12 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, textTransform:"uppercase" }}>Type</div>
+            {isPresident && (
+              <button onClick={()=>setShowNewType(!showNewType)}
+                style={{ fontSize:11, color:"#6C63FF", background:"none", border:"none", cursor:"pointer", fontWeight:700 }}>
+                {showNewType ? "Cancel" : "+ New Type"}
+              </button>
+            )}
           </div>
-        ))}
+          {showNewType ? (
+            <div style={{ background:"#F9FAFB", borderRadius:8, padding:12, marginBottom:8 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", marginBottom:6 }}>New category name</div>
+              <input value={newTypeLabel} onChange={e=>setNewTypeLabel(e.target.value)} placeholder="e.g. Workshop, Speaker, Campus Fair..." style={{ ...inputStyle, marginBottom:8 }} />
+              <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", marginBottom:6 }}>Color</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
+                {TYPE_COLORS.map(c => (
+                  <div key={c} onClick={()=>setNewTypeColor(c)}
+                    style={{ width:22, height:22, borderRadius:"50%", background:c, cursor:"pointer",
+                      border: newTypeColor===c ? "3px solid #111827" : "2px solid transparent" }} />
+                ))}
+              </div>
+              <button onClick={()=>{
+                if (!newTypeLabel.trim()) return;
+                if (onAddType) onAddType(newTypeLabel.toLowerCase().replace(/\s+/g,"-"), newTypeLabel.trim(), newTypeColor);
+                setForm({...form, type: newTypeLabel.toLowerCase().replace(/\s+/g,"-")});
+                setShowNewType(false); setNewTypeLabel("");
+              }}
+                style={{ width:"100%", background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"8px", fontWeight:700, fontSize:13, cursor:"pointer" }}>
+                Add Category
+              </button>
+            </div>
+          ) : (
+            <select value={(form as any).type} onChange={e=>setForm({...form,type:e.target.value})} style={inputStyle}>
+              {Object.entries(typeMeta).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+            </select>
+          )}
+        </div>
+
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:5, textTransform:"uppercase" }}>Title</div>
+          <input value={(form as any).title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Item name..." style={inputStyle} />
+        </div>
+
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:5, textTransform:"uppercase" }}>Effort</div>
+          <select value={(form as any).load} onChange={e=>setForm({...form,load:Number(e.target.value)})} style={inputStyle}>
+            <option value={1}>Low</option><option value={2}>Medium</option><option value={3}>High</option>
+          </select>
+        </div>
+
         <div style={{ display:"flex", gap:10, marginTop:20 }}>
           <button onClick={onClose} style={{ flex:1, background:"#F3F4F6", color:"#374151", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor:"pointer" }}>Cancel</button>
-          <button disabled={saving} onClick={async ()=>{ if(form.title.trim()){ setSaving(true); await onSave(form); onClose(); } }}
+          <button disabled={saving} onClick={async ()=>{
+            if((form as any).title.trim()){ setSaving(true); await onSave(form); onClose(); }
+          }}
             style={{ flex:2, background: saving ? "#9CA3AF" : "#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor: saving?"not-allowed":"pointer" }}>
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : title === "Add to Timeline" ? "Add to Plan" : "Save Changes"}
           </button>
         </div>
       </div>
@@ -187,47 +253,28 @@ function EditItemModal({ item, onClose, onSave }: { item: Item; onClose: () => v
   );
 }
 
-function AddItemModal({ onClose, onAdd }: { onClose: () => void; onAdd: (f: Omit<Item,"id">) => Promise<void> }) {
-  const [form, setForm] = useState({ week: WEEKS[0].date, type: "event", title: "", load: 2 });
-  const [saving, setSaving] = useState(false);
-  return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.55)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
-      <div style={{ background:"#fff", borderRadius:16, padding:28, width:440, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize:17, fontWeight:800, color:"#111827", marginBottom:18 }}>Add to Timeline</div>
-        {([
-          { label:"Week",   el: <select value={form.week} onChange={e=>setForm({...form,week:e.target.value})} style={inputStyle}>{WEEKS.map(w=><option key={w.date} value={w.date}>{w.date}</option>)}</select> },
-          { label:"Type",   el: <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} style={inputStyle}>{Object.entries(TYPE_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select> },
-          { label:"Title",  el: <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Item name..." style={inputStyle} /> },
-          { label:"Effort", el: <select value={form.load} onChange={e=>setForm({...form,load:Number(e.target.value)})} style={inputStyle}><option value={1}>Low</option><option value={2}>Medium</option><option value={3}>High</option></select> },
-        ] as {label:string;el:React.ReactNode}[]).map(({label,el})=>(
-          <div key={label} style={{ marginBottom:12 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:5, textTransform:"uppercase" }}>{label}</div>
-            {el}
-          </div>
-        ))}
-        <div style={{ display:"flex", gap:10, marginTop:20 }}>
-          <button onClick={onClose} style={{ flex:1, background:"#F3F4F6", color:"#374151", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor:"pointer" }}>Cancel</button>
-          <button disabled={saving} onClick={async ()=>{ if(form.title.trim()){ setSaving(true); await onAdd(form as Omit<Item,"id">); onClose(); } }}
-            style={{ flex:2, background: saving ? "#9CA3AF" : "#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor: saving?"not-allowed":"pointer" }}>
-            {saving ? "Saving..." : "Add to Plan"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PasswordModal({ onSuccess }: { onSuccess: () => void }) {
-  const [pw, setPw] = useState(""); const [err, setErr] = useState(false);
+function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [pw, setPw] = useState("");
+  const [err, setErr] = useState(false);
+  const [show, setShow] = useState(false);
   const check = () => { if (pw === PRESIDENT_PASSWORD) onSuccess(); else { setErr(true); setPw(""); } };
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.7)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#fff", borderRadius:16, padding:32, width:360, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.25)" }}>
+      <div style={{ background:"#fff", borderRadius:16, padding:32, width:360, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.25)", position:"relative" }}>
+        <button onClick={onClose} style={{ position:"absolute", top:14, right:16, background:"none", border:"none", fontSize:22, color:"#9CA3AF", cursor:"pointer" }}>×</button>
         <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:"#6C63FF", textTransform:"uppercase", marginBottom:8 }}>President / VP Access</div>
         <div style={{ fontSize:18, fontWeight:800, color:"#111827", marginBottom:4 }}>Enter Password</div>
         <div style={{ fontSize:13, color:"#6B7280", marginBottom:20 }}>Add, edit, and delete timeline items.</div>
-        <input type="password" value={pw} onChange={e=>{ setPw(e.target.value); setErr(false); }} onKeyDown={e=>e.key==="Enter"&&check()} placeholder="Password"
-          style={{ ...inputStyle, marginBottom: err ? 6 : 16, border: err ? "1.5px solid #EF4444" : "1.5px solid #D1D5DB" }} />
+        <div style={{ position:"relative", marginBottom: err ? 6 : 16 }}>
+          <input type={show ? "text" : "password"} value={pw}
+            onChange={e=>{ setPw(e.target.value); setErr(false); }}
+            onKeyDown={e=>e.key==="Enter"&&check()} placeholder="Password"
+            style={{ ...inputStyle, paddingRight:44, border: err ? "1.5px solid #EF4444" : "1.5px solid #D1D5DB" }} />
+          <button onClick={()=>setShow(!show)}
+            style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#6B7280", fontSize:12, fontWeight:600 }}>
+            {show ? "Hide" : "Show"}
+          </button>
+        </div>
         {err && <div style={{ fontSize:12, color:"#EF4444", marginBottom:12 }}>Incorrect password.</div>}
         <button onClick={check} style={{ width:"100%", background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"10px", fontWeight:700, fontSize:14, cursor:"pointer" }}>Unlock</button>
       </div>
@@ -242,14 +289,21 @@ export default function App() {
   const [showPwModal, setShowPwModal] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [customTypes, setCustomTypes] = useState<CustomType[]>(() => {
+    try { return JSON.parse(localStorage.getItem("bc_custom_types") || "[]"); } catch { return []; }
+  });
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<{ type: "note"|"add"|"edit"; item?: Item } | null>(null);
   const [filterType, setFilterType] = useState("all");
   const [loadingNotes, setLoadingNotes] = useState(false);
 
+  const typeMeta = {
+    ...DEFAULT_TYPES,
+    ...Object.fromEntries(customTypes.map(t => [t.key, { label: t.label, color: t.color, bg: t.bg, dot: t.dot }]))
+  };
+
   useEffect(() => {
-    initItems();
-    fetchNotes();
+    initItems(); fetchNotes();
     const channel = supabase.channel("realtime-all")
       .on("postgres_changes", { event: "*", schema: "public", table: "notes" }, () => fetchNotes())
       .on("postgres_changes", { event: "*", schema: "public", table: "items" }, () => fetchItems())
@@ -261,45 +315,40 @@ export default function App() {
     const { data } = await supabase.from("items").select("*").order("created_at", { ascending: true });
     if (data) setItems(data as Item[]);
   };
-
   const initItems = async () => {
     const { data } = await supabase.from("items").select("*");
-    if (data && data.length === 0) {
-      await supabase.from("items").insert(SEED_ITEMS);
-      await fetchItems();
-    } else if (data) {
-      setItems(data as Item[]);
-    }
+    if (data && data.length === 0) { await supabase.from("items").insert(SEED_ITEMS); await fetchItems(); }
+    else if (data) setItems(data as Item[]);
     setLoading(false);
   };
-
   const fetchNotes = async () => {
     const { data } = await supabase.from("notes").select("*").order("created_at", { ascending: true });
     if (data) setNotes(data as Note[]);
   };
-
   const addNote = async (itemId: number, author: string, text: string) => {
     await supabase.from("notes").insert({ item_id: itemId, author, text });
     await fetchNotes();
   };
-
   const addItem = async (form: Omit<Item,"id">) => {
-    await supabase.from("items").insert(form);
-    await fetchItems();
+    await supabase.from("items").insert(form); await fetchItems();
   };
-
   const editItem = async (updated: Item) => {
     await supabase.from("items").update({ week: updated.week, type: updated.type, title: updated.title, load: updated.load }).eq("id", updated.id);
     await fetchItems();
   };
-
   const removeItem = async (id: number) => {
-    await supabase.from("items").delete().eq("id", id);
-    await fetchItems();
+    await supabase.from("items").delete().eq("id", id); await fetchItems();
+  };
+  const addCustomType = (key: string, label: string, color: string) => {
+    const bg = color + "22";
+    const newType: CustomType = { key, label, color, bg, dot: color };
+    const updated = [...customTypes.filter(t => t.key !== key), newType];
+    setCustomTypes(updated);
+    try { localStorage.setItem("bc_custom_types", JSON.stringify(updated)); } catch {}
   };
 
   const handleRoleClick = (r: string) => {
-    if (r === ROLES.PRESIDENT && role !== ROLES.PRESIDENT) { setShowPwModal(true); }
+    if (r === ROLES.PRESIDENT && role !== ROLES.PRESIDENT) setShowPwModal(true);
     else if (r === ROLES.CABINET) { setRole(ROLES.CABINET); try { localStorage.setItem("bc_role", ROLES.CABINET); } catch {} }
   };
 
@@ -317,7 +366,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#0D1136", fontFamily:"'Inter',-apple-system,sans-serif" }}>
-      {showPwModal && <PasswordModal onSuccess={() => {
+      {showPwModal && <PasswordModal onClose={() => setShowPwModal(false)} onSuccess={() => {
         setRole(ROLES.PRESIDENT);
         try { localStorage.setItem("bc_role", ROLES.PRESIDENT); } catch {}
         setShowPwModal(false);
@@ -361,12 +410,12 @@ export default function App() {
       <div style={{ background:"#111538", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"12px 28px" }}>
         <div style={{ maxWidth:960, margin:"0 auto", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
           <span style={{ fontSize:11, color:"#8B92C9", fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>Filter:</span>
-          {([["all","All"], ...Object.entries(TYPE_META).map(([k,v])=>[k,v.label])] as [string,string][]).map(([k,l]) => (
+          {([["all","All"], ...Object.entries(typeMeta).map(([k,v])=>[k,v.label])] as [string,string][]).map(([k,l]) => (
             <button key={k} onClick={() => setFilterType(k)}
               style={{ padding:"5px 12px", borderRadius:20,
-                border: `1.5px solid ${filterType===k ? (TYPE_META[k]?.color||"#6C63FF") : "rgba(255,255,255,0.1)"}`,
-                background: filterType===k ? (TYPE_META[k]?.bg||"#EEF0FF") : "transparent",
-                color: filterType===k ? (TYPE_META[k]?.color||"#6C63FF") : "#8B92C9",
+                border: `1.5px solid ${filterType===k ? (typeMeta[k]?.color||"#6C63FF") : "rgba(255,255,255,0.1)"}`,
+                background: filterType===k ? (typeMeta[k]?.bg||"#EEF0FF") : "transparent",
+                color: filterType===k ? (typeMeta[k]?.color||"#6C63FF") : "#8B92C9",
                 fontWeight:700, fontSize:11, cursor:"pointer" }}>
               {l}
             </button>
@@ -398,10 +447,10 @@ export default function App() {
                 {isThanksgiving && weekItems.length===0 && (
                   <div style={{ fontSize:12, color:"#F59E0B", opacity:0.6, fontStyle:"italic", padding:"6px 0" }}>Thanksgiving — no club activities</div>
                 )}
-                {weekItems.length>1 && <LoadBar items={weekItems} />}
+                {weekItems.length>1 && <LoadBar items={weekItems} typeMeta={typeMeta} />}
                 <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                   {weekItems.map(item => {
-                    const meta = TYPE_META[item.type];
+                    const meta = typeMeta[item.type] || { label: item.type, color: "#6B7280", bg: "#F3F4F6", dot: "#6B7280" };
                     const itemNotes = notesForItem(item.id);
                     return (
                       <div key={item.id}
@@ -453,7 +502,7 @@ export default function App() {
 
         <div style={{ marginTop:32, background:"#1a1f5e", borderRadius:14, padding:"18px 22px", display:"flex", flexWrap:"wrap", gap:16, alignItems:"center" }}>
           <span style={{ fontSize:11, fontWeight:700, color:"#8B92C9", textTransform:"uppercase", letterSpacing:0.5 }}>Legend</span>
-          {Object.entries(TYPE_META).map(([k,v]) => (
+          {Object.entries(typeMeta).map(([k,v]) => (
             <div key={k} style={{ display:"flex", alignItems:"center", gap:6 }}>
               <div style={{ width:8, height:8, borderRadius:"50%", background:v.dot }} />
               <span style={{ fontSize:12, color:"#C7CBF0", fontWeight:600 }}>{v.label}</span>
@@ -465,10 +514,17 @@ export default function App() {
 
       {modal?.type==="note" && modal.item && (
         <NoteModal item={modal.item} notes={notesForItem(modal.item.id)} loadingNotes={loadingNotes}
-          onClose={() => setModal(null)} onAddNote={(author, text) => addNote(modal.item!.id, author, text)} />
+          typeMeta={typeMeta} onClose={() => setModal(null)}
+          onAddNote={(author, text) => addNote(modal.item!.id, author, text)} />
       )}
-      {modal?.type==="add" && <AddItemModal onClose={() => setModal(null)} onAdd={addItem} />}
-      {modal?.type==="edit" && modal.item && <EditItemModal item={modal.item} onClose={() => setModal(null)} onSave={editItem} />}
+      {modal?.type==="add" && (
+        <ItemFormModal title="Add to Timeline" typeMeta={typeMeta} isPresident={role===ROLES.PRESIDENT}
+          onClose={() => setModal(null)} onSave={f => addItem(f as Omit<Item,"id">)} />
+      )}
+      {modal?.type==="edit" && modal.item && (
+        <ItemFormModal title="Edit Item" item={modal.item} typeMeta={typeMeta} isPresident={role===ROLES.PRESIDENT}
+          onClose={() => setModal(null)} onSave={f => editItem(f as Item)} />
+      )}
     </div>
   );
 }
