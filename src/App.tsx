@@ -108,12 +108,13 @@ function LoadBar({ items, typeMeta }: { items: Item[], typeMeta: Record<string, 
   );
 }
 
-function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes, typeMeta }: {
+function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes, typeMeta, myNoteIds }: {
   item: Item; notes: Note[]; onClose: () => void;
   onAddNote: (author: string, text: string) => Promise<void>;
   onDeleteNote: (id: number) => Promise<void>;
   loadingNotes: boolean;
   typeMeta: Record<string, {label:string;color:string;bg:string;dot:string}>;
+  myNoteIds: Set<number>;
 }) {
   const [text, setText] = useState("");
   const [author, setAuthor] = useState("");
@@ -152,11 +153,13 @@ function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes
                   <span style={{ color:"#4B5563" }}>{n.text}</span>
                   <div style={{ fontSize:10, color:"#9CA3AF", marginTop:2 }}>{new Date(n.created_at).toLocaleString()}</div>
                 </div>
-                <button onClick={() => handleDelete(n.id)} disabled={deletingId === n.id}
-                  style={{ background:"none", border:"none", color: deletingId===n.id ? "#D1D5DB" : "#EF4444", cursor: deletingId===n.id ? "not-allowed" : "pointer", fontSize:16, padding:"0 2px", flexShrink:0, lineHeight:1 }}
-                  title="Delete note">
-                  {deletingId === n.id ? "..." : "×"}
-                </button>
+                {myNoteIds.has(n.id) && (
+                  <button onClick={() => handleDelete(n.id)} disabled={deletingId === n.id}
+                    style={{ background:"none", border:"none", color: deletingId===n.id ? "#D1D5DB" : "#EF4444", cursor: deletingId===n.id ? "not-allowed" : "pointer", fontSize:16, padding:"0 2px", flexShrink:0, lineHeight:1 }}
+                    title="Delete your note">
+                    {deletingId === n.id ? "..." : "×"}
+                  </button>
+                )}
               </div>
             ))}
         </div>
@@ -307,6 +310,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("bc_custom_types") || "[]"); } catch { return []; }
   });
   const [loading, setLoading] = useState(true);
+  const [myNoteIds, setMyNoteIds] = useState<Set<number>>(new Set());
   const [modal, setModal] = useState<{ type: "note"|"add"|"edit"; item?: Item } | null>(null);
   const [filterType, setFilterType] = useState("all");
   const [loadingNotes, setLoadingNotes] = useState(false);
@@ -340,7 +344,8 @@ export default function App() {
     if (data) setNotes(data as Note[]);
   };
   const addNote = async (itemId: number, author: string, text: string) => {
-    await supabase.from("notes").insert({ item_id: itemId, author, text });
+    const { data } = await supabase.from("notes").insert({ item_id: itemId, author, text }).select();
+    if (data && data[0]) setMyNoteIds(prev => new Set([...prev, data[0].id]));
     await fetchNotes();
   };
   const deleteNote = async (id: number) => {
@@ -532,7 +537,7 @@ export default function App() {
 
       {modal?.type==="note" && modal.item && (
         <NoteModal item={modal.item} notes={notesForItem(modal.item.id)} loadingNotes={loadingNotes}
-          typeMeta={typeMeta} onClose={() => setModal(null)}
+          typeMeta={typeMeta} myNoteIds={myNoteIds} onClose={() => setModal(null)}
           onAddNote={(author, text) => addNote(modal.item!.id, author, text)}
           onDeleteNote={deleteNote} />
       )}
