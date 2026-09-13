@@ -108,21 +108,28 @@ function LoadBar({ items, typeMeta }: { items: Item[], typeMeta: Record<string, 
   );
 }
 
-function NoteModal({ item, notes, onClose, onAddNote, loadingNotes, typeMeta }: {
+function NoteModal({ item, notes, onClose, onAddNote, onDeleteNote, loadingNotes, typeMeta }: {
   item: Item; notes: Note[]; onClose: () => void;
   onAddNote: (author: string, text: string) => Promise<void>;
+  onDeleteNote: (id: number) => Promise<void>;
   loadingNotes: boolean;
   typeMeta: Record<string, {label:string;color:string;bg:string;dot:string}>;
 }) {
   const [text, setText] = useState("");
   const [author, setAuthor] = useState("");
   const [posting, setPosting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number|null>(null);
   const meta = typeMeta[item.type] || { label: item.type, color: "#6B7280", bg: "#F3F4F6", dot: "#6B7280" };
   const handlePost = async () => {
     if (!text.trim() || !author.trim()) return;
     setPosting(true);
     await onAddNote(author.trim(), text.trim());
     setText(""); setAuthor(""); setPosting(false);
+  };
+  const handleDelete = async (id: number) => {
+    setDeletingId(id);
+    await onDeleteNote(id);
+    setDeletingId(null);
   };
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.55)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
@@ -139,10 +146,17 @@ function NoteModal({ item, notes, onClose, onAddNote, loadingNotes, typeMeta }: 
           {loadingNotes ? <div style={{ fontSize:13, color:"#9CA3AF" }}>Loading...</div>
             : notes.length === 0 ? <div style={{ fontSize:13, color:"#9CA3AF", fontStyle:"italic" }}>No notes yet — be the first.</div>
             : notes.map(n => (
-              <div key={n.id} style={{ background:"#F9FAFB", borderRadius:8, padding:"8px 12px", marginBottom:6, fontSize:13 }}>
-                <span style={{ fontWeight:700, color:"#374151" }}>{n.author}: </span>
-                <span style={{ color:"#4B5563" }}>{n.text}</span>
-                <div style={{ fontSize:10, color:"#9CA3AF", marginTop:2 }}>{new Date(n.created_at).toLocaleString()}</div>
+              <div key={n.id} style={{ background:"#F9FAFB", borderRadius:8, padding:"8px 12px", marginBottom:6, fontSize:13, display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
+                <div style={{ flex:1 }}>
+                  <span style={{ fontWeight:700, color:"#374151" }}>{n.author}: </span>
+                  <span style={{ color:"#4B5563" }}>{n.text}</span>
+                  <div style={{ fontSize:10, color:"#9CA3AF", marginTop:2 }}>{new Date(n.created_at).toLocaleString()}</div>
+                </div>
+                <button onClick={() => handleDelete(n.id)} disabled={deletingId === n.id}
+                  style={{ background:"none", border:"none", color: deletingId===n.id ? "#D1D5DB" : "#EF4444", cursor: deletingId===n.id ? "not-allowed" : "pointer", fontSize:16, padding:"0 2px", flexShrink:0, lineHeight:1 }}
+                  title="Delete note">
+                  {deletingId === n.id ? "..." : "×"}
+                </button>
               </div>
             ))}
         </div>
@@ -327,6 +341,10 @@ export default function App() {
   };
   const addNote = async (itemId: number, author: string, text: string) => {
     await supabase.from("notes").insert({ item_id: itemId, author, text });
+    await fetchNotes();
+  };
+  const deleteNote = async (id: number) => {
+    await supabase.from("notes").delete().eq("id", id);
     await fetchNotes();
   };
   const addItem = async (form: Omit<Item,"id">) => {
@@ -515,7 +533,8 @@ export default function App() {
       {modal?.type==="note" && modal.item && (
         <NoteModal item={modal.item} notes={notesForItem(modal.item.id)} loadingNotes={loadingNotes}
           typeMeta={typeMeta} onClose={() => setModal(null)}
-          onAddNote={(author, text) => addNote(modal.item!.id, author, text)} />
+          onAddNote={(author, text) => addNote(modal.item!.id, author, text)}
+          onDeleteNote={deleteNote} />
       )}
       {modal?.type==="add" && (
         <ItemFormModal title="Add to Timeline" typeMeta={typeMeta} isPresident={role===ROLES.PRESIDENT}
