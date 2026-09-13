@@ -44,86 +44,48 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string; dot:
   fundraiser:{ label: "Fundraiser",  color: "#EC4899", bg: "#FFF0F8", dot: "#EC4899" },
 };
 
-const INITIAL_ITEMS = [
-  // SEP 8
-  { id: 1,  week: "Sep 8",  type: "cabinet",    title: "Fall Kickoff Cabinet Meeting — Trainings, Semester Plan, Website Review", load: 1 },
-
-  // SEP 14
-  { id: 2,  week: "Sep 14", type: "deadline",   title: "Facilities Request Deadline — Oct 5 Mixer & Oct 26 Night Market (submit with Gabby)", load: 3 },
-  { id: 3,  week: "Sep 14", type: "outreach",   title: "Ask Josiah — IOC Agenda Deadline for Sept 28 Presentation", load: 1 },
-  { id: 4,  week: "Sep 14", type: "outreach",   title: "Website Launch — Present to Cabinet for Review & Feedback", load: 1 },
-
-  // SEP 16
-  { id: 5,  week: "Sep 16", type: "asg",        title: "Submit ASG Agenda Request — Oct 1 ASG Meeting (Night Market collaboration)", load: 2 },
-
-  // SEP 21
-  { id: 6,  week: "Sep 21", type: "outreach",   title: "Meet with Amparo — Present Oct 5 & Oct 26 Plans, ASG Collaboration for Night Market", load: 3 },
-  { id: 7,  week: "Sep 21", type: "outreach",   title: "Meet with Josiah — Get on IOC Agenda for Sept 28 Presentation", load: 2 },
-  { id: 8,  week: "Sep 21", type: "cabinet",    title: "Cabinet Check-In — Flyers, Logistics, ASG/IOC Prep, Marketing Strategy", load: 2 },
-
-  // SEP 23
-  { id: 9,  week: "Sep 23", type: "asg",        title: "Submit ASG Agenda Request — Collaboration Ask for Sept 24 ASG Meeting", load: 1 },
-
-  // SEP 24
-  { id: 10, week: "Sep 24", type: "asg",        title: "ASG Meeting — Request Collaboration, Projector/Blowup, Officer Roles for Night Market", load: 2 },
-
-  // SEP 28
-  { id: 11, week: "Sep 28", type: "ioc",        title: "IOC Meeting — Ask Clubs to RSVP Collaboration, Gauge Materials & Attendance Estimates", load: 3 },
-  { id: 12, week: "Sep 28", type: "deadline",   title: "IOC Funding Expected — Save Funding Form for Next Meeting (need accurate numbers first)", load: 2 },
-
-  // SEP 30
-  { id: 13, week: "Sep 30", type: "asg",        title: "Submit ASG Agenda Request — Oct 8 Meeting: Night Market Updates, Playlist, Marketing & Officer Roles", load: 1 },
-
-  // OCT 1
-  { id: 14, week: "Oct 1",  type: "asg",        title: "ASG Meeting — Updates: Club Interest, Student Headcount Estimates, Vendor Participation", load: 2 },
-
-  // OCT 5
-  { id: 15, week: "Oct 5",  type: "event",      title: "Back in Business Mixer — Fall Welcome Event (Wed 12–1pm, campus location TBD)", load: 3 },
-  { id: 16, week: "Oct 5",  type: "ioc",        title: "IOC Meeting — Request Funding (if tabled earlier, push for approval here)", load: 3 },
-
-  // OCT 7
-  { id: 17, week: "Oct 7",  type: "deadline",   title: "Submit Flyers to ASG (for Oct 15 Meeting approval) + Ensure All Required Forms Are In", load: 2 },
-
-  // OCT 8
-  { id: 18, week: "Oct 8",  type: "asg",        title: "ASG Meeting — Night Market Updates, Playlist, Marketing Strategy & Officer Support Roles", load: 2 },
-
-  // OCT 12
-  { id: 19, week: "Oct 12", type: "ioc",        title: "IOC Meeting — Give Updates, Begin Flyer Distribution to IOC Officers, Coordinate Marketing", load: 2 },
-
-  // OCT 14
-  { id: 20, week: "Oct 14", type: "asg",        title: "Submit ASG Agenda Request — Last-Minute Updates or Changes Before Event", load: 1 },
-
-  // OCT 15
-  { id: 21, week: "Oct 15", type: "asg",        title: "ASG Meeting — Present All Forms & Event Strategy (11 days out) / Worst Case: ASG Funding Approved Here", load: 3 },
-
-  // OCT 19
-  { id: 22, week: "Oct 19", type: "ioc",        title: "IOC Meeting — Market Event to IOC Officers, Final Updates & Coordination", load: 2 },
-
-  // OCT 21
-  { id: 23, week: "Oct 21", type: "asg",        title: "Submit ASG Agenda Request — Oct 29 Post-Event Debrief (Success, Turnout, Spring Plans)", load: 1 },
-
-  // OCT 26
-  { id: 24, week: "Oct 26", type: "event",      title: "🎃 Nightmare on Condor Night Market — Halloween / Día de los Muertos HSI Event (Quad, date/time TBD)", load: 3 },
-
-  // OCT 29
-  { id: 25, week: "Oct 29", type: "asg",        title: "ASG Meeting — Post-Event Debrief: Turnout, Successes, Lessons Learned & Spring Night Market Plans", load: 2 },
-
-  // NOV 9
-  { id: 26, week: "Nov 9",  type: "cabinet",    title: "Cabinet Check-In — Semester Debrief, Spring Planning Kickoff", load: 1 },
-
-  // NOV 16
-  { id: 27, week: "Nov 16", type: "deadline",   title: "ASG Funding & Budget Deadlines — Spring Semester Planning", load: 2 },
-
-  // DEC 7
-  { id: 28, week: "Dec 7",  type: "event",      title: "End-of-Semester Celebration — Cabinet & Members", load: 2 },
+const SEED_ITEMS = [
+  { week: "Sep 8",  type: "cabinet",    title: "Fall Kickoff Cabinet Meeting — Trainings, Semester Plan, Website Review", load: 1 },
+  { week: "Sep 14", type: "deadline",   title: "Facilities Request Deadline — Oct 5 Mixer & Oct 26 Night Market (submit with Gabby)", load: 3 },
+  { week: "Sep 14", type: "outreach",   title: "Ask Josiah — IOC Agenda Deadline for Sept 28 Presentation", load: 1 },
+  { week: "Sep 14", type: "outreach",   title: "Website Launch — Present to Cabinet for Review & Feedback", load: 1 },
+  { week: "Sep 16", type: "asg",        title: "Submit ASG Agenda Request — Oct 1 ASG Meeting (Night Market collaboration)", load: 2 },
+  { week: "Sep 21", type: "outreach",   title: "Meet with Amparo — Present Oct 5 & Oct 26 Plans, ASG Collaboration for Night Market", load: 3 },
+  { week: "Sep 21", type: "outreach",   title: "Meet with Josiah — Get on IOC Agenda for Sept 28 Presentation", load: 2 },
+  { week: "Sep 21", type: "cabinet",    title: "Cabinet Check-In — Flyers, Logistics, ASG/IOC Prep, Marketing Strategy", load: 2 },
+  { week: "Sep 23", type: "asg",        title: "Submit ASG Agenda Request — Collaboration Ask for Sept 24 ASG Meeting", load: 1 },
+  { week: "Sep 24", type: "asg",        title: "ASG Meeting — Request Collaboration, Projector/Blowup, Officer Roles for Night Market", load: 2 },
+  { week: "Sep 28", type: "ioc",        title: "IOC Meeting — Ask Clubs to RSVP Collaboration, Gauge Materials & Attendance Estimates", load: 3 },
+  { week: "Sep 28", type: "deadline",   title: "IOC Funding Expected — Save Funding Form for Next Meeting (need accurate numbers first)", load: 2 },
+  { week: "Sep 30", type: "asg",        title: "Submit ASG Agenda Request — Oct 8 Meeting: Night Market Updates, Playlist, Marketing & Officer Roles", load: 1 },
+  { week: "Oct 1",  type: "asg",        title: "ASG Meeting — Updates: Club Interest, Student Headcount Estimates, Vendor Participation", load: 2 },
+  { week: "Oct 5",  type: "event",      title: "Back in Business Mixer — Fall Welcome Event (Wed 12–1pm, campus location TBD)", load: 3 },
+  { week: "Oct 5",  type: "ioc",        title: "IOC Meeting — Request Funding (if tabled earlier, push for approval here)", load: 3 },
+  { week: "Oct 7",  type: "deadline",   title: "Submit Flyers to ASG (for Oct 15 Meeting approval) + Ensure All Required Forms Are In", load: 2 },
+  { week: "Oct 8",  type: "asg",        title: "ASG Meeting — Night Market Updates, Playlist, Marketing Strategy & Officer Support Roles", load: 2 },
+  { week: "Oct 12", type: "ioc",        title: "IOC Meeting — Give Updates, Begin Flyer Distribution to IOC Officers, Coordinate Marketing", load: 2 },
+  { week: "Oct 14", type: "asg",        title: "Submit ASG Agenda Request — Last-Minute Updates or Changes Before Event", load: 1 },
+  { week: "Oct 15", type: "asg",        title: "ASG Meeting — Present All Forms & Event Strategy (11 days out) / Worst Case: ASG Funding Approved Here", load: 3 },
+  { week: "Oct 19", type: "ioc",        title: "IOC Meeting — Market Event to IOC Officers, Final Updates & Coordination", load: 2 },
+  { week: "Oct 21", type: "asg",        title: "Submit ASG Agenda Request — Oct 29 Post-Event Debrief (Success, Turnout, Spring Plans)", load: 1 },
+  { week: "Oct 26", type: "event",      title: "🎃 Nightmare on Condor Night Market — Halloween / Día de los Muertos HSI Event (Quad, date/time TBD)", load: 3 },
+  { week: "Oct 29", type: "asg",        title: "ASG Meeting — Post-Event Debrief: Turnout, Successes, Lessons Learned & Spring Night Market Plans", load: 2 },
+  { week: "Nov 9",  type: "cabinet",    title: "Cabinet Check-In — Semester Debrief, Spring Planning Kickoff", load: 1 },
+  { week: "Nov 16", type: "deadline",   title: "ASG Funding & Budget Deadlines — Spring Semester Planning", load: 2 },
+  { week: "Dec 7",  type: "event",      title: "End-of-Semester Celebration — Cabinet & Members", load: 2 },
 ];
 
 const LOAD_LABELS: Record<number, string> = { 1: "Low", 2: "Medium", 3: "High" };
 const LOAD_COLORS: Record<number, string> = { 1: "#10B981", 2: "#F59E0B", 3: "#EF4444" };
 
 const inputStyle: React.CSSProperties = {
-  width: "100%", border: "1.5px solid #E5E7EB", borderRadius: 8,
-  padding: "8px 10px", fontSize: 13, boxSizing: "border-box", outline: "none", background: "#FAFAFA",
+  width: "100%", border: "1.5px solid #D1D5DB", borderRadius: 8,
+  padding: "8px 10px", fontSize: 13, boxSizing: "border-box", outline: "none",
+  background: "#FFFFFF", color: "#111827",
+};
+
+const textareaStyle: React.CSSProperties = {
+  ...inputStyle, resize: "none" as const,
 };
 
 interface Note { id: number; item_id: number; author: string; text: string; created_at: string }
@@ -136,8 +98,8 @@ function LoadBar({ items }: { items: Item[] }) {
   const label = total === 0 ? "Clear" : total <= 2 ? "Manageable" : total <= 5 ? "Busy" : "Heavy";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-      <div style={{ flex: 1, height: 5, borderRadius: 4, background: "#E5E7EB", overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 4, transition: "width 0.4s" }} />
+      <div style={{ flex: 1, height: 5, borderRadius: 4, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 4 }} />
       </div>
       <span style={{ fontSize: 10, color, fontWeight: 700, minWidth: 60 }}>{label}</span>
     </div>
@@ -163,11 +125,11 @@ function NoteModal({ item, notes, onClose, onAddNote, loadingNotes }: {
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.55)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
       <div style={{ background:"#fff", borderRadius:16, padding:28, width:440, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)", maxHeight:"80vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
-          <div>
+          <div style={{ flex:1, marginRight:12 }}>
             <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:meta.color, textTransform:"uppercase", marginBottom:4 }}>{meta.label} · {item.week}</div>
-            <div style={{ fontSize:15, fontWeight:700, color:"#0D1136", lineHeight:1.3 }}>{item.title}</div>
+            <div style={{ fontSize:15, fontWeight:700, color:"#111827", lineHeight:1.3 }}>{item.title}</div>
           </div>
-          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, color:"#9CA3AF", cursor:"pointer", marginLeft:12, flexShrink:0 }}>×</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, color:"#9CA3AF", cursor:"pointer", flexShrink:0 }}>×</button>
         </div>
         <div style={{ marginBottom:16 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:8, textTransform:"uppercase" }}>Cabinet Notes</div>
@@ -184,7 +146,7 @@ function NoteModal({ item, notes, onClose, onAddNote, loadingNotes }: {
         <div style={{ borderTop:"1px solid #F3F4F6", paddingTop:16 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:0.5, marginBottom:8, textTransform:"uppercase" }}>Add a Note</div>
           <input placeholder="Your name" value={author} onChange={e => setAuthor(e.target.value)} style={{ ...inputStyle, marginBottom:8 }} />
-          <textarea placeholder="Leave a thought, question, or update..." value={text} onChange={e => setText(e.target.value)} rows={3} style={{ ...inputStyle, resize:"none" }} />
+          <textarea placeholder="Leave a thought, question, or update..." value={text} onChange={e => setText(e.target.value)} rows={3} style={textareaStyle} />
           <button onClick={handlePost} disabled={posting}
             style={{ marginTop:8, background: posting ? "#9CA3AF" : "#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"9px 18px", fontWeight:700, fontSize:13, cursor: posting ? "not-allowed" : "pointer", float:"right" }}>
             {posting ? "Posting..." : "Post Note"}
@@ -195,12 +157,13 @@ function NoteModal({ item, notes, onClose, onAddNote, loadingNotes }: {
   );
 }
 
-function EditItemModal({ item, onClose, onSave }: { item: Item; onClose: () => void; onSave: (u: Item) => void }) {
+function EditItemModal({ item, onClose, onSave }: { item: Item; onClose: () => void; onSave: (u: Item) => Promise<void> }) {
   const [form, setForm] = useState({ ...item });
+  const [saving, setSaving] = useState(false);
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.55)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
-      <div style={{ background:"#fff", borderRadius:16, padding:28, width:420, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize:17, fontWeight:800, color:"#0D1136", marginBottom:18 }}>Edit Item</div>
+      <div style={{ background:"#fff", borderRadius:16, padding:28, width:440, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize:17, fontWeight:800, color:"#111827", marginBottom:18 }}>Edit Item</div>
         {([
           { label:"Week",   el: <select value={form.week} onChange={e=>setForm({...form,week:e.target.value})} style={inputStyle}>{WEEKS.map(w=><option key={w.date} value={w.date}>{w.date}</option>)}</select> },
           { label:"Type",   el: <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} style={inputStyle}>{Object.entries(TYPE_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select> },
@@ -214,19 +177,23 @@ function EditItemModal({ item, onClose, onSave }: { item: Item; onClose: () => v
         ))}
         <div style={{ display:"flex", gap:10, marginTop:20 }}>
           <button onClick={onClose} style={{ flex:1, background:"#F3F4F6", color:"#374151", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor:"pointer" }}>Cancel</button>
-          <button onClick={()=>{ if(form.title.trim()){ onSave(form); onClose(); } }} style={{ flex:2, background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor:"pointer" }}>Save Changes</button>
+          <button disabled={saving} onClick={async ()=>{ if(form.title.trim()){ setSaving(true); await onSave(form); onClose(); } }}
+            style={{ flex:2, background: saving ? "#9CA3AF" : "#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor: saving?"not-allowed":"pointer" }}>
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function AddItemModal({ onClose, onAdd }: { onClose: () => void; onAdd: (f: Omit<Item,"id">) => void }) {
+function AddItemModal({ onClose, onAdd }: { onClose: () => void; onAdd: (f: Omit<Item,"id">) => Promise<void> }) {
   const [form, setForm] = useState({ week: WEEKS[0].date, type: "event", title: "", load: 2 });
+  const [saving, setSaving] = useState(false);
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.55)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
-      <div style={{ background:"#fff", borderRadius:16, padding:28, width:420, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize:17, fontWeight:800, color:"#0D1136", marginBottom:18 }}>Add to Timeline</div>
+      <div style={{ background:"#fff", borderRadius:16, padding:28, width:440, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize:17, fontWeight:800, color:"#111827", marginBottom:18 }}>Add to Timeline</div>
         {([
           { label:"Week",   el: <select value={form.week} onChange={e=>setForm({...form,week:e.target.value})} style={inputStyle}>{WEEKS.map(w=><option key={w.date} value={w.date}>{w.date}</option>)}</select> },
           { label:"Type",   el: <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} style={inputStyle}>{Object.entries(TYPE_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select> },
@@ -240,7 +207,10 @@ function AddItemModal({ onClose, onAdd }: { onClose: () => void; onAdd: (f: Omit
         ))}
         <div style={{ display:"flex", gap:10, marginTop:20 }}>
           <button onClick={onClose} style={{ flex:1, background:"#F3F4F6", color:"#374151", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor:"pointer" }}>Cancel</button>
-          <button onClick={()=>{ if(form.title.trim()){ onAdd(form as Omit<Item,"id">); onClose(); } }} style={{ flex:2, background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor:"pointer" }}>Add to Plan</button>
+          <button disabled={saving} onClick={async ()=>{ if(form.title.trim()){ setSaving(true); await onAdd(form as Omit<Item,"id">); onClose(); } }}
+            style={{ flex:2, background: saving ? "#9CA3AF" : "#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:10, fontWeight:700, fontSize:13, cursor: saving?"not-allowed":"pointer" }}>
+            {saving ? "Saving..." : "Add to Plan"}
+          </button>
         </div>
       </div>
     </div>
@@ -254,10 +224,10 @@ function PasswordModal({ onSuccess }: { onSuccess: () => void }) {
     <div style={{ position:"fixed", inset:0, background:"rgba(10,12,30,0.7)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
       <div style={{ background:"#fff", borderRadius:16, padding:32, width:360, maxWidth:"92vw", boxShadow:"0 24px 64px rgba(0,0,0,0.25)" }}>
         <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:"#6C63FF", textTransform:"uppercase", marginBottom:8 }}>President / VP Access</div>
-        <div style={{ fontSize:18, fontWeight:800, color:"#0D1136", marginBottom:4 }}>Enter Password</div>
+        <div style={{ fontSize:18, fontWeight:800, color:"#111827", marginBottom:4 }}>Enter Password</div>
         <div style={{ fontSize:13, color:"#6B7280", marginBottom:20 }}>Add, edit, and delete timeline items.</div>
         <input type="password" value={pw} onChange={e=>{ setPw(e.target.value); setErr(false); }} onKeyDown={e=>e.key==="Enter"&&check()} placeholder="Password"
-          style={{ ...inputStyle, marginBottom: err ? 6 : 16, border: err ? "1.5px solid #EF4444" : "1.5px solid #E5E7EB" }} />
+          style={{ ...inputStyle, marginBottom: err ? 6 : 16, border: err ? "1.5px solid #EF4444" : "1.5px solid #D1D5DB" }} />
         {err && <div style={{ fontSize:12, color:"#EF4444", marginBottom:12 }}>Incorrect password.</div>}
         <button onClick={check} style={{ width:"100%", background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"10px", fontWeight:700, fontSize:14, cursor:"pointer" }}>Unlock</button>
       </div>
@@ -266,37 +236,71 @@ function PasswordModal({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export default function App() {
-  const [role, setRole] = useState<string>(ROLES.CABINET);
+  const [role, setRole] = useState<string>(() => {
+    try { return localStorage.getItem("bc_role") || ROLES.CABINET; } catch { return ROLES.CABINET; }
+  });
   const [showPwModal, setShowPwModal] = useState(false);
-  const [items, setItems] = useState<Item[]>(INITIAL_ITEMS);
+  const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<{ type: "note"|"add"|"edit"; item?: Item } | null>(null);
   const [filterType, setFilterType] = useState("all");
-  const [nextId, setNextId] = useState(300);
   const [loadingNotes, setLoadingNotes] = useState(false);
 
   useEffect(() => {
+    initItems();
     fetchNotes();
-    const channel = supabase.channel("notes-changes")
+    const channel = supabase.channel("realtime-all")
       .on("postgres_changes", { event: "*", schema: "public", table: "notes" }, () => fetchNotes())
+      .on("postgres_changes", { event: "*", schema: "public", table: "items" }, () => fetchItems())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const fetchItems = async () => {
+    const { data } = await supabase.from("items").select("*").order("created_at", { ascending: true });
+    if (data) setItems(data as Item[]);
+  };
+
+  const initItems = async () => {
+    const { data } = await supabase.from("items").select("*");
+    if (data && data.length === 0) {
+      await supabase.from("items").insert(SEED_ITEMS);
+      await fetchItems();
+    } else if (data) {
+      setItems(data as Item[]);
+    }
+    setLoading(false);
+  };
 
   const fetchNotes = async () => {
     const { data } = await supabase.from("notes").select("*").order("created_at", { ascending: true });
     if (data) setNotes(data as Note[]);
   };
+
   const addNote = async (itemId: number, author: string, text: string) => {
     await supabase.from("notes").insert({ item_id: itemId, author, text });
     await fetchNotes();
   };
-  const addItem = (form: Omit<Item,"id">) => { setItems(prev => [...prev, { id: nextId, ...form }]); setNextId(n => n + 1); };
-  const editItem = (updated: Item) => setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
-  const removeItem = (id: number) => setItems(prev => prev.filter(i => i.id !== id));
+
+  const addItem = async (form: Omit<Item,"id">) => {
+    await supabase.from("items").insert(form);
+    await fetchItems();
+  };
+
+  const editItem = async (updated: Item) => {
+    await supabase.from("items").update({ week: updated.week, type: updated.type, title: updated.title, load: updated.load }).eq("id", updated.id);
+    await fetchItems();
+  };
+
+  const removeItem = async (id: number) => {
+    await supabase.from("items").delete().eq("id", id);
+    await fetchItems();
+  };
+
   const handleRoleClick = (r: string) => {
-    if (r === ROLES.PRESIDENT && role !== ROLES.PRESIDENT) setShowPwModal(true);
-    else if (r === ROLES.CABINET) setRole(ROLES.CABINET);
+    if (r === ROLES.PRESIDENT && role !== ROLES.PRESIDENT) { setShowPwModal(true); }
+    else if (r === ROLES.CABINET) { setRole(ROLES.CABINET); try { localStorage.setItem("bc_role", ROLES.CABINET); } catch {} }
   };
 
   const filteredItems = filterType === "all" ? items : items.filter(i => i.type === filterType);
@@ -305,9 +309,19 @@ export default function App() {
   filteredItems.forEach(item => { (weekMap[item.week] = weekMap[item.week] || []).push(item); });
   const notesForItem = (id: number) => notes.filter(n => n.item_id === id);
 
+  if (loading) return (
+    <div style={{ minHeight:"100vh", background:"#0D1136", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ color:"#8B92C9", fontSize:16, fontWeight:600, fontFamily:"Inter,sans-serif" }}>Loading semester plan...</div>
+    </div>
+  );
+
   return (
     <div style={{ minHeight:"100vh", background:"#0D1136", fontFamily:"'Inter',-apple-system,sans-serif" }}>
-      {showPwModal && <PasswordModal onSuccess={() => { setRole(ROLES.PRESIDENT); setShowPwModal(false); }} />}
+      {showPwModal && <PasswordModal onSuccess={() => {
+        setRole(ROLES.PRESIDENT);
+        try { localStorage.setItem("bc_role", ROLES.PRESIDENT); } catch {}
+        setShowPwModal(false);
+      }} />}
 
       <div style={{ background:"linear-gradient(135deg,#0D1136 0%,#1a1f5e 100%)", padding:"36px 28px 24px", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
         <div style={{ maxWidth:960, margin:"0 auto" }}>
@@ -329,11 +343,11 @@ export default function App() {
           </div>
           <div style={{ display:"flex", gap:12, marginTop:22, flexWrap:"wrap" }}>
             {[
-              { label:"Events",       val: items.filter(i=>i.type==="event").length,      color:"#6C63FF" },
-              { label:"ASG Meetings", val: items.filter(i=>i.type==="asg").length,        color:"#0EA5E9" },
-              { label:"IOC Meetings", val: items.filter(i=>i.type==="ioc").length,        color:"#10B981" },
-              { label:"Deadlines",    val: items.filter(i=>i.type==="deadline").length,   color:"#EF4444" },
-              { label:"Total Items",  val: items.length,                                  color:"#8B92C9" },
+              { label:"Events",       val: items.filter(i=>i.type==="event").length,    color:"#6C63FF" },
+              { label:"ASG Meetings", val: items.filter(i=>i.type==="asg").length,      color:"#0EA5E9" },
+              { label:"IOC Meetings", val: items.filter(i=>i.type==="ioc").length,      color:"#10B981" },
+              { label:"Deadlines",    val: items.filter(i=>i.type==="deadline").length, color:"#EF4444" },
+              { label:"Total Items",  val: items.length,                                color:"#8B92C9" },
             ].map(s => (
               <div key={s.label} style={{ background:"rgba(255,255,255,0.06)", borderRadius:10, padding:"10px 16px", minWidth:80 }}>
                 <div style={{ fontSize:20, fontWeight:900, color:s.color }}>{s.val}</div>
