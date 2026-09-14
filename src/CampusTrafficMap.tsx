@@ -142,7 +142,7 @@ export default function CampusTrafficMap() {
 
   const { busiest, total } = useMemo(() => {
     const seen = new Set<string>();
-    let busiestShape: Shape | null = null;
+    let busiestShape: Shape = SHAPES[0];
     let busiestVal = -1;
     let sum = 0;
     SHAPES.forEach((s) => {
@@ -212,7 +212,7 @@ export default function CampusTrafficMap() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
-        <StatCard label="Busiest building" value={busiest.shape ? `${busiest.shape.name} (${busiest.val})` : "—"} />
+        <StatCard label="Busiest building" value={`${busiest.shape.name} (${busiest.val})`} />
         <StatCard label="Est. students on-site" value={`${total} students`} />
         <StatCard label="Quietest bookable venue" value={quietestVenue.v.name} accent="#7ED9B9" />
       </div>
