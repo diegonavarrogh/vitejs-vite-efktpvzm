@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import CampusTrafficMap from "./CampusTrafficMap";
+import CabinetTasks from "./CabinetTasks";
 
 const SUPABASE_URL = "https://iuyulottqtbcysrvakdr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1eXVsb3R0cXRiY3lzcnZha2RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMDA5ODMsImV4cCI6MjEwNDU3Njk4M30.N4usQOn90-QtEpSWULPZ-kXt6204xmajf1HQ7Of55bQ";
@@ -305,7 +306,7 @@ export default function App() {
   const [role, setRole] = useState<string>(() => {
     try { return localStorage.getItem("bc_role") || ROLES.CABINET; } catch { return ROLES.CABINET; }
   });
-  const [view, setView] = useState<"timeline" | "map">("timeline");
+const [view, setView] = useState<"timeline" | "map" | "tasks">("timeline");
   const [showPwModal, setShowPwModal] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -408,11 +409,11 @@ export default function App() {
             </div>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
               <div style={{ display:"flex", background:"rgba(255,255,255,0.07)", borderRadius:10, padding:4, gap:4 }}>
-                {(["timeline","map"] as const).map(v => (
+              {(["timeline", "map", "tasks"] as const).map(v => (
                   <button key={v} onClick={() => setView(v)}
                     style={{ padding:"7px 14px", borderRadius:7, border:"none", fontWeight:700, fontSize:12, cursor:"pointer", transition:"all 0.2s",
                       background: view===v ? "#6C63FF" : "transparent", color: view===v ? "#fff" : "#8B92C9" }}>
-                    {v === "timeline" ? "Timeline" : "Campus Map"}
+                  {v === "timeline" ? "Timeline" : v === "map" ? "Campus Map" : "Cabinet Tasks"}
                   </button>
                 ))}
               </div>
@@ -560,7 +561,11 @@ export default function App() {
           <CampusTrafficMap />
         </div>
       )}
-
+{view === "tasks" && (
+  <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px 20px 60px" }}>
+    <CabinetTasks isPresident={role === ROLES.PRESIDENT} />
+  </div>
+)}
       {modal?.type==="note" && modal.item && (
         <NoteModal item={modal.item} notes={notesForItem(modal.item.id)} loadingNotes={loadingNotes}
           typeMeta={typeMeta} myNoteIds={myNoteIds} isPresident={role===ROLES.PRESIDENT} onClose={() => setModal(null)}
