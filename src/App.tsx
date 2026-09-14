@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import CampusTrafficMap from "./CampusTrafficMap";
 
 const SUPABASE_URL = "https://iuyulottqtbcysrvakdr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1eXVsb3R0cXRiY3lzcnZha2RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMDA5ODMsImV4cCI6MjEwNDU3Njk4M30.N4usQOn90-QtEpSWULPZ-kXt6204xmajf1HQ7Of55bQ";
@@ -304,6 +305,7 @@ export default function App() {
   const [role, setRole] = useState<string>(() => {
     try { return localStorage.getItem("bc_role") || ROLES.CABINET; } catch { return ROLES.CABINET; }
   });
+  const [view, setView] = useState<"timeline" | "map">("timeline");
   const [showPwModal, setShowPwModal] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -404,137 +406,160 @@ export default function App() {
               <h1 style={{ margin:0, fontSize:28, fontWeight:900, color:"#FFFFFF", lineHeight:1.1 }}>Fall 2026 <span style={{ color:"#6C63FF" }}>Semester Plan</span></h1>
               <p style={{ margin:"6px 0 0", color:"#8B92C9", fontSize:13 }}>Sep 8 – Dec 7 · Full logistics timeline</p>
             </div>
-            <div style={{ display:"flex", background:"rgba(255,255,255,0.07)", borderRadius:10, padding:4, gap:4 }}>
-              {Object.values(ROLES).map(r => (
-                <button key={r} onClick={() => handleRoleClick(r)}
-                  style={{ padding:"7px 14px", borderRadius:7, border:"none", fontWeight:700, fontSize:12, cursor:"pointer", transition:"all 0.2s",
-                    background: role === r ? "#6C63FF" : "transparent", color: role === r ? "#fff" : "#8B92C9" }}>
-                  {r}
-                </button>
-              ))}
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+              <div style={{ display:"flex", background:"rgba(255,255,255,0.07)", borderRadius:10, padding:4, gap:4 }}>
+                {(["timeline","map"] as const).map(v => (
+                  <button key={v} onClick={() => setView(v)}
+                    style={{ padding:"7px 14px", borderRadius:7, border:"none", fontWeight:700, fontSize:12, cursor:"pointer", transition:"all 0.2s",
+                      background: view===v ? "#6C63FF" : "transparent", color: view===v ? "#fff" : "#8B92C9" }}>
+                    {v === "timeline" ? "Timeline" : "Campus Map"}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display:"flex", background:"rgba(255,255,255,0.07)", borderRadius:10, padding:4, gap:4 }}>
+                {Object.values(ROLES).map(r => (
+                  <button key={r} onClick={() => handleRoleClick(r)}
+                    style={{ padding:"7px 14px", borderRadius:7, border:"none", fontWeight:700, fontSize:12, cursor:"pointer", transition:"all 0.2s",
+                      background: role === r ? "#6C63FF" : "transparent", color: role === r ? "#fff" : "#8B92C9" }}>
+                    {r}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div style={{ display:"flex", gap:12, marginTop:22, flexWrap:"wrap" }}>
-            {[
-              { label:"Events",       val: items.filter(i=>i.type==="event").length,    color:"#6C63FF" },
-              { label:"ASG Meetings", val: items.filter(i=>i.type==="asg").length,      color:"#0EA5E9" },
-              { label:"IOC Meetings", val: items.filter(i=>i.type==="ioc").length,      color:"#10B981" },
-              { label:"Deadlines",    val: items.filter(i=>i.type==="deadline").length, color:"#EF4444" },
-              { label:"Total Items",  val: items.length,                                color:"#8B92C9" },
-            ].map(s => (
-              <div key={s.label} style={{ background:"rgba(255,255,255,0.06)", borderRadius:10, padding:"10px 16px", minWidth:80 }}>
-                <div style={{ fontSize:20, fontWeight:900, color:s.color }}>{s.val}</div>
-                <div style={{ fontSize:10, color:"#8B92C9", fontWeight:600 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ background:"#111538", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"12px 28px" }}>
-        <div style={{ maxWidth:960, margin:"0 auto", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-          <span style={{ fontSize:11, color:"#8B92C9", fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>Filter:</span>
-          {([["all","All"], ...Object.entries(typeMeta).map(([k,v])=>[k,v.label])] as [string,string][]).map(([k,l]) => (
-            <button key={k} onClick={() => setFilterType(k)}
-              style={{ padding:"5px 12px", borderRadius:20,
-                border: `1.5px solid ${filterType===k ? (typeMeta[k]?.color||"#6C63FF") : "rgba(255,255,255,0.1)"}`,
-                background: filterType===k ? (typeMeta[k]?.bg||"#EEF0FF") : "transparent",
-                color: filterType===k ? (typeMeta[k]?.color||"#6C63FF") : "#8B92C9",
-                fontWeight:700, fontSize:11, cursor:"pointer" }}>
-              {l}
-            </button>
-          ))}
-          {role === ROLES.PRESIDENT && (
-            <button onClick={() => setModal({ type:"add" })}
-              style={{ marginLeft:"auto", background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"7px 16px", fontWeight:700, fontSize:12, cursor:"pointer" }}>
-              + Add Item
-            </button>
+          {view === "timeline" && (
+            <div style={{ display:"flex", gap:12, marginTop:22, flexWrap:"wrap" }}>
+              {[
+                { label:"Events",       val: items.filter(i=>i.type==="event").length,    color:"#6C63FF" },
+                { label:"ASG Meetings", val: items.filter(i=>i.type==="asg").length,      color:"#0EA5E9" },
+                { label:"IOC Meetings", val: items.filter(i=>i.type==="ioc").length,      color:"#10B981" },
+                { label:"Deadlines",    val: items.filter(i=>i.type==="deadline").length, color:"#EF4444" },
+                { label:"Total Items",  val: items.length,                                color:"#8B92C9" },
+              ].map(s => (
+                <div key={s.label} style={{ background:"rgba(255,255,255,0.06)", borderRadius:10, padding:"10px 16px", minWidth:80 }}>
+                  <div style={{ fontSize:20, fontWeight:900, color:s.color }}>{s.val}</div>
+                  <div style={{ fontSize:10, color:"#8B92C9", fontWeight:600 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      <div style={{ maxWidth:960, margin:"0 auto", padding:"24px 20px 60px" }}>
-        {WEEKS.map(week => {
-          const weekItems = weekMap[week.date] || [];
-          const isThanksgiving = week.date.includes("Nov 23");
-          return (
-            <div key={week.date} style={{ display:"flex", gap:0, marginBottom:4 }}>
-              <div style={{ width:76, flexShrink:0, paddingTop:14, paddingRight:14, textAlign:"right" }}>
-                <div style={{ fontSize:11, fontWeight:700, color: isThanksgiving ? "#F59E0B" : "#8B92C9" }}>{week.label}</div>
-                {isThanksgiving && <div style={{ fontSize:9, color:"#F59E0B", fontWeight:600 }}>BREAK</div>}
-              </div>
-              <div style={{ width:1, background:"rgba(255,255,255,0.08)", flexShrink:0, position:"relative", marginTop:18 }}>
-                <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:8, height:8, borderRadius:"50%",
-                  background: weekItems.length>0 ? "#6C63FF" : "rgba(255,255,255,0.1)", border:"2px solid #0D1136" }} />
-              </div>
-              <div style={{ flex:1, paddingLeft:14, paddingBottom:6, paddingTop:10 }}>
-                {isThanksgiving && weekItems.length===0 && (
-                  <div style={{ fontSize:12, color:"#F59E0B", opacity:0.6, fontStyle:"italic", padding:"6px 0" }}>Thanksgiving — no club activities</div>
-                )}
-                {weekItems.length>1 && <LoadBar items={weekItems} typeMeta={typeMeta} />}
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                  {weekItems.map(item => {
-                    const meta = typeMeta[item.type] || { label: item.type, color: "#6B7280", bg: "#F3F4F6", dot: "#6B7280" };
-                    const itemNotes = notesForItem(item.id);
-                    return (
-                      <div key={item.id}
-                        onClick={() => { setLoadingNotes(true); setModal({ type:"note", item }); setTimeout(()=>setLoadingNotes(false),300); }}
-                        style={{ background:"#1a1f5e", borderRadius:10, padding:"10px 14px", minWidth:200, maxWidth:360, flex:"1 1 200px",
-                          border:`1.5px solid ${meta.color}22`, cursor:"pointer", transition:"transform 0.15s,box-shadow 0.15s", boxShadow:"0 2px 10px rgba(0,0,0,0.2)" }}
-                        onMouseEnter={e=>{ (e.currentTarget as HTMLDivElement).style.transform="translateY(-2px)"; (e.currentTarget as HTMLDivElement).style.boxShadow=`0 6px 24px ${meta.color}33`; }}
-                        onMouseLeave={e=>{ (e.currentTarget as HTMLDivElement).style.transform="translateY(0)"; (e.currentTarget as HTMLDivElement).style.boxShadow="0 2px 10px rgba(0,0,0,0.2)"; }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
-                            <div style={{ width:8, height:8, borderRadius:"50%", background:meta.dot, flexShrink:0 }} />
-                            <span style={{ fontSize:10, fontWeight:700, color:meta.color, textTransform:"uppercase", letterSpacing:0.5 }}>{meta.label}</span>
-                          </div>
-                          <div style={{ display:"flex", gap:5, alignItems:"center" }}>
-                            {itemNotes.length>0 && (
-                              <span style={{ fontSize:10, background:"rgba(108,99,255,0.2)", color:"#6C63FF", borderRadius:10, padding:"1px 7px", fontWeight:700 }}>
-                                {itemNotes.length} note{itemNotes.length>1?"s":""}
-                              </span>
-                            )}
-                            {role===ROLES.PRESIDENT && (
-                              <>
-                                <button onClick={e=>{ e.stopPropagation(); setModal({ type:"edit", item }); }}
-                                  style={{ background:"rgba(108,99,255,0.15)", border:"none", color:"#6C63FF", cursor:"pointer", fontSize:11, padding:"2px 8px", borderRadius:5, fontWeight:700 }}>
-                                  Edit
-                                </button>
-                                <button onClick={e=>{ e.stopPropagation(); removeItem(item.id); }}
-                                  style={{ background:"rgba(239,68,68,0.12)", border:"none", color:"#EF4444", cursor:"pointer", fontSize:13, padding:"1px 6px", borderRadius:5, fontWeight:700 }}>
-                                  ×
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"#E8EAFF", lineHeight:1.3 }}>{item.title}</div>
-                        <div style={{ marginTop:6 }}>
-                          <div style={{ fontSize:10, color:LOAD_COLORS[item.load], fontWeight:700 }}>● {LOAD_LABELS[item.load]} effort</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {weekItems.length===0 && !isThanksgiving && (
-                    <div style={{ fontSize:12, color:"rgba(255,255,255,0.1)", padding:"6px 0", fontStyle:"italic" }}>Open</div>
-                  )}
-                </div>
-              </div>
+      {view === "timeline" && (
+        <>
+          <div style={{ background:"#111538", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"12px 28px" }}>
+            <div style={{ maxWidth:960, margin:"0 auto", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+              <span style={{ fontSize:11, color:"#8B92C9", fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>Filter:</span>
+              {([["all","All"], ...Object.entries(typeMeta).map(([k,v])=>[k,v.label])] as [string,string][]).map(([k,l]) => (
+                <button key={k} onClick={() => setFilterType(k)}
+                  style={{ padding:"5px 12px", borderRadius:20,
+                    border: `1.5px solid ${filterType===k ? (typeMeta[k]?.color||"#6C63FF") : "rgba(255,255,255,0.1)"}`,
+                    background: filterType===k ? (typeMeta[k]?.bg||"#EEF0FF") : "transparent",
+                    color: filterType===k ? (typeMeta[k]?.color||"#6C63FF") : "#8B92C9",
+                    fontWeight:700, fontSize:11, cursor:"pointer" }}>
+                  {l}
+                </button>
+              ))}
+              {role === ROLES.PRESIDENT && (
+                <button onClick={() => setModal({ type:"add" })}
+                  style={{ marginLeft:"auto", background:"#6C63FF", color:"#fff", border:"none", borderRadius:8, padding:"7px 16px", fontWeight:700, fontSize:12, cursor:"pointer" }}>
+                  + Add Item
+                </button>
+              )}
             </div>
-          );
-        })}
+          </div>
 
-        <div style={{ marginTop:32, background:"#1a1f5e", borderRadius:14, padding:"18px 22px", display:"flex", flexWrap:"wrap", gap:16, alignItems:"center" }}>
-          <span style={{ fontSize:11, fontWeight:700, color:"#8B92C9", textTransform:"uppercase", letterSpacing:0.5 }}>Legend</span>
-          {Object.entries(typeMeta).map(([k,v]) => (
-            <div key={k} style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <div style={{ width:8, height:8, borderRadius:"50%", background:v.dot }} />
-              <span style={{ fontSize:12, color:"#C7CBF0", fontWeight:600 }}>{v.label}</span>
+          <div style={{ maxWidth:960, margin:"0 auto", padding:"24px 20px 60px" }}>
+            {WEEKS.map(week => {
+              const weekItems = weekMap[week.date] || [];
+              const isThanksgiving = week.date.includes("Nov 23");
+              return (
+                <div key={week.date} style={{ display:"flex", gap:0, marginBottom:4 }}>
+                  <div style={{ width:76, flexShrink:0, paddingTop:14, paddingRight:14, textAlign:"right" }}>
+                    <div style={{ fontSize:11, fontWeight:700, color: isThanksgiving ? "#F59E0B" : "#8B92C9" }}>{week.label}</div>
+                    {isThanksgiving && <div style={{ fontSize:9, color:"#F59E0B", fontWeight:600 }}>BREAK</div>}
+                  </div>
+                  <div style={{ width:1, background:"rgba(255,255,255,0.08)", flexShrink:0, position:"relative", marginTop:18 }}>
+                    <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:8, height:8, borderRadius:"50%",
+                      background: weekItems.length>0 ? "#6C63FF" : "rgba(255,255,255,0.1)", border:"2px solid #0D1136" }} />
+                  </div>
+                  <div style={{ flex:1, paddingLeft:14, paddingBottom:6, paddingTop:10 }}>
+                    {isThanksgiving && weekItems.length===0 && (
+                      <div style={{ fontSize:12, color:"#F59E0B", opacity:0.6, fontStyle:"italic", padding:"6px 0" }}>Thanksgiving — no club activities</div>
+                    )}
+                    {weekItems.length>1 && <LoadBar items={weekItems} typeMeta={typeMeta} />}
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                      {weekItems.map(item => {
+                        const meta = typeMeta[item.type] || { label: item.type, color: "#6B7280", bg: "#F3F4F6", dot: "#6B7280" };
+                        const itemNotes = notesForItem(item.id);
+                        return (
+                          <div key={item.id}
+                            onClick={() => { setLoadingNotes(true); setModal({ type:"note", item }); setTimeout(()=>setLoadingNotes(false),300); }}
+                            style={{ background:"#1a1f5e", borderRadius:10, padding:"10px 14px", minWidth:200, maxWidth:360, flex:"1 1 200px",
+                              border:`1.5px solid ${meta.color}22`, cursor:"pointer", transition:"transform 0.15s,box-shadow 0.15s", boxShadow:"0 2px 10px rgba(0,0,0,0.2)" }}
+                            onMouseEnter={e=>{ (e.currentTarget as HTMLDivElement).style.transform="translateY(-2px)"; (e.currentTarget as HTMLDivElement).style.boxShadow=`0 6px 24px ${meta.color}33`; }}
+                            onMouseLeave={e=>{ (e.currentTarget as HTMLDivElement).style.transform="translateY(0)"; (e.currentTarget as HTMLDivElement).style.boxShadow="0 2px 10px rgba(0,0,0,0.2)"; }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                              <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
+                                <div style={{ width:8, height:8, borderRadius:"50%", background:meta.dot, flexShrink:0 }} />
+                                <span style={{ fontSize:10, fontWeight:700, color:meta.color, textTransform:"uppercase", letterSpacing:0.5 }}>{meta.label}</span>
+                              </div>
+                              <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                                {itemNotes.length>0 && (
+                                  <span style={{ fontSize:10, background:"rgba(108,99,255,0.2)", color:"#6C63FF", borderRadius:10, padding:"1px 7px", fontWeight:700 }}>
+                                    {itemNotes.length} note{itemNotes.length>1?"s":""}
+                                  </span>
+                                )}
+                                {role===ROLES.PRESIDENT && (
+                                  <>
+                                    <button onClick={e=>{ e.stopPropagation(); setModal({ type:"edit", item }); }}
+                                      style={{ background:"rgba(108,99,255,0.15)", border:"none", color:"#6C63FF", cursor:"pointer", fontSize:11, padding:"2px 8px", borderRadius:5, fontWeight:700 }}>
+                                      Edit
+                                    </button>
+                                    <button onClick={e=>{ e.stopPropagation(); removeItem(item.id); }}
+                                      style={{ background:"rgba(239,68,68,0.12)", border:"none", color:"#EF4444", cursor:"pointer", fontSize:13, padding:"1px 6px", borderRadius:5, fontWeight:700 }}>
+                                      ×
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ fontSize:13, fontWeight:700, color:"#E8EAFF", lineHeight:1.3 }}>{item.title}</div>
+                            <div style={{ marginTop:6 }}>
+                              <div style={{ fontSize:10, color:LOAD_COLORS[item.load], fontWeight:700 }}>● {LOAD_LABELS[item.load]} effort</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {weekItems.length===0 && !isThanksgiving && (
+                        <div style={{ fontSize:12, color:"rgba(255,255,255,0.1)", padding:"6px 0", fontStyle:"italic" }}>Open</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div style={{ marginTop:32, background:"#1a1f5e", borderRadius:14, padding:"18px 22px", display:"flex", flexWrap:"wrap", gap:16, alignItems:"center" }}>
+              <span style={{ fontSize:11, fontWeight:700, color:"#8B92C9", textTransform:"uppercase", letterSpacing:0.5 }}>Legend</span>
+              {Object.entries(typeMeta).map(([k,v]) => (
+                <div key={k} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:v.dot }} />
+                  <span style={{ fontSize:12, color:"#C7CBF0", fontWeight:600 }}>{v.label}</span>
+                </div>
+              ))}
+              <div style={{ marginLeft:"auto", fontSize:11, color:"#8B92C9" }}>Click any card to leave notes</div>
             </div>
-          ))}
-          <div style={{ marginLeft:"auto", fontSize:11, color:"#8B92C9" }}>Click any card to leave notes</div>
+          </div>
+        </>
+      )}
+
+      {view === "map" && (
+        <div style={{ maxWidth:960, margin:"0 auto", padding:"24px 20px 60px" }}>
+          <CampusTrafficMap />
         </div>
-      </div>
+      )}
 
       {modal?.type==="note" && modal.item && (
         <NoteModal item={modal.item} notes={notesForItem(modal.item.id)} loadingNotes={loadingNotes}
